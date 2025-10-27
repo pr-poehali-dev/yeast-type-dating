@@ -6,6 +6,7 @@ import { Slider } from '@/components/ui/slider'
 import Icon from '@/components/ui/icon'
 import { Progress } from '@/components/ui/progress'
 import YeastDetailModal from '@/components/YeastDetailModal'
+import ComparisonPanel from '@/components/ComparisonPanel'
 
 interface YeastProfile {
   id: number
@@ -99,6 +100,8 @@ function Index() {
   const [userTemp, setUserTemp] = useState([25])
   const [selectedYeast, setSelectedYeast] = useState<YeastProfile | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [comparisonYeasts, setComparisonYeasts] = useState<YeastProfile[]>([])
+  const [showComparison, setShowComparison] = useState(false)
 
   const calculateCompatibility = (yeast: YeastProfile): number => {
     const phDiff = Math.abs(yeast.ph - userPh[0])
@@ -111,6 +114,24 @@ function Index() {
   const handleYeastClick = (yeast: YeastProfile) => {
     setSelectedYeast(yeast)
     setIsModalOpen(true)
+  }
+
+  const toggleComparison = (yeast: YeastProfile) => {
+    if (comparisonYeasts.find(y => y.id === yeast.id)) {
+      setComparisonYeasts(comparisonYeasts.filter(y => y.id !== yeast.id))
+    } else {
+      if (comparisonYeasts.length < 6) {
+        setComparisonYeasts([...comparisonYeasts, yeast])
+      }
+    }
+  }
+
+  const removeFromComparison = (id: number) => {
+    setComparisonYeasts(comparisonYeasts.filter(y => y.id !== id))
+  }
+
+  const clearComparison = () => {
+    setComparisonYeasts([])
   }
 
   return (
@@ -126,7 +147,31 @@ function Index() {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Платформа знакомств для дрожжевых культур. Найди идеальную пару по pH и температурным режимам!
           </p>
+          <div className="mt-6 flex justify-center gap-4">
+            <Button
+              size="lg"
+              variant={showComparison ? 'default' : 'outline'}
+              onClick={() => setShowComparison(!showComparison)}
+              className={showComparison ? 'bg-purple-600 hover:bg-purple-700' : ''}
+            >
+              <Icon name="GitCompare" size={20} className="mr-2" />
+              {showComparison ? 'Скрыть сравнение' : 'Режим сравнения'}
+              {comparisonYeasts.length > 0 && (
+                <Badge className="ml-2 bg-orange-500">{comparisonYeasts.length}</Badge>
+              )}
+            </Button>
+          </div>
         </header>
+
+        {showComparison && (
+          <section className="mb-20 animate-fade-in">
+            <ComparisonPanel
+              yeasts={comparisonYeasts}
+              onRemove={removeFromComparison}
+              onClear={clearComparison}
+            />
+          </section>
+        )}
 
         <section className="mb-20 animate-fade-in">
           <Card className="border-2 border-purple-200 shadow-xl bg-white/80 backdrop-blur">
@@ -193,9 +238,8 @@ function Index() {
               return (
                 <Card
                   key={yeast.id}
-                  className="hover-scale cursor-pointer border-2 hover:border-purple-400 transition-all duration-300 bg-white/90 backdrop-blur"
+                  className="hover-scale border-2 hover:border-purple-400 transition-all duration-300 bg-white/90 backdrop-blur"
                   style={{ animationDelay: `${index * 0.1}s` }}
-                  onClick={() => handleYeastClick(yeast)}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -254,10 +298,28 @@ function Index() {
                       </div>
                     </div>
 
-                    <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                      <Icon name="Heart" size={18} className="mr-2" />
-                      Познакомиться
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleYeastClick(yeast)
+                        }}
+                      >
+                        <Icon name="Info" size={18} className="mr-2" />
+                        Подробнее
+                      </Button>
+                      <Button
+                        variant={comparisonYeasts.find(y => y.id === yeast.id) ? 'default' : 'outline'}
+                        className={comparisonYeasts.find(y => y.id === yeast.id) ? 'bg-orange-500 hover:bg-orange-600' : ''}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleComparison(yeast)
+                        }}
+                      >
+                        <Icon name={comparisonYeasts.find(y => y.id === yeast.id) ? 'Check' : 'Plus'} size={18} />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               )
