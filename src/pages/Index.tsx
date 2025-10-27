@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Slider } from '@/components/ui/slider'
 import Icon from '@/components/ui/icon'
 import { Progress } from '@/components/ui/progress'
+import YeastDetailModal from '@/components/YeastDetailModal'
 
 interface YeastProfile {
   id: number
@@ -96,6 +97,8 @@ const events = [
 function Index() {
   const [userPh, setUserPh] = useState([4.5])
   const [userTemp, setUserTemp] = useState([25])
+  const [selectedYeast, setSelectedYeast] = useState<YeastProfile | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const calculateCompatibility = (yeast: YeastProfile): number => {
     const phDiff = Math.abs(yeast.ph - userPh[0])
@@ -103,6 +106,11 @@ function Index() {
     const phScore = Math.max(0, 100 - phDiff * 20)
     const tempScore = Math.max(0, 100 - tempDiff * 5)
     return Math.round((phScore + tempScore) / 2)
+  }
+
+  const handleYeastClick = (yeast: YeastProfile) => {
+    setSelectedYeast(yeast)
+    setIsModalOpen(true)
   }
 
   return (
@@ -187,6 +195,7 @@ function Index() {
                   key={yeast.id}
                   className="hover-scale cursor-pointer border-2 hover:border-purple-400 transition-all duration-300 bg-white/90 backdrop-blur"
                   style={{ animationDelay: `${index * 0.1}s` }}
+                  onClick={() => handleYeastClick(yeast)}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -331,6 +340,13 @@ function Index() {
           </Button>
         </section>
       </div>
+
+      <YeastDetailModal
+        yeast={selectedYeast}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        compatibility={selectedYeast ? calculateCompatibility(selectedYeast) : 0}
+      />
     </div>
   )
 }
